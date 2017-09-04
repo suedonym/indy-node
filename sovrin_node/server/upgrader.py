@@ -14,7 +14,7 @@ from plenum.server.has_action_queue import HasActionQueue
 from sovrin_common.constants import ACTION, POOL_UPGRADE, START, SCHEDULE, \
     CANCEL, JUSTIFICATION, TIMEOUT, REINSTALL, NODE_UPGRADE, IN_PROGRESS, FORCE
 from sovrin_node.server.upgrade_log import UpgradeLog
-from plenum.server import notifier_plugin_manager
+from indy_node.server import notifier_plugin_manager
 from ledger.util import F
 import asyncio
 
@@ -90,7 +90,7 @@ class Upgrader(HasActionQueue):
         self.dataDir = dataDir
         self.ledger = ledger
         self.scheduledUpgrade = None  # type: Tuple[str, int, str]
-        self._notifier = notifier_plugin_manager.PluginManager()
+        self._notifier = notifier_plugin_manager.PluginManagerNode()
         self._upgradeLog = upgradeLog if upgradeLog else \
             self.__defaultLog(dataDir, config)
         self._upgradeFailedCallback = \
@@ -130,7 +130,7 @@ class Upgrader(HasActionQueue):
             self._upgradeLog.appendFailed(when, version, upgrade_id)
             logger.error("Failed to upgrade node '{}' to version {}"
                          .format(self.nodeName, version))
-            self._notifier.sendMessageUponNodeUpgradeFail(
+            self._notifier.send_node_self_upgrade_fail(
                 "Upgrade of node '{}' to version {} "
                 "scheduled on {} with upgrade_id {} failed"
                 .format(self.nodeName, version, when, upgrade_id))
@@ -139,7 +139,7 @@ class Upgrader(HasActionQueue):
         self._upgradeLog.appendSucceeded(when, version, upgrade_id)
         logger.info("Node '{}' successfully upgraded to version {}"
                     .format(self.nodeName, version))
-        self._notifier.sendMessageUponNodeUpgradeComplete(
+        self._notifier.send_node_self_upgrade_complete(
             "Upgrade of node '{}' to version {} scheduled on {} "
             " with upgrade_id {} completed successfully"
             .format(self.nodeName, version, when, upgrade_id))
@@ -361,7 +361,7 @@ class Upgrader(HasActionQueue):
             when = dateutil.parser.parse(when)
         now = datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc())
 
-        self._notifier.sendMessageUponNodeUpgradeScheduled(
+        self._notifier.send_node_self_upgrade_scheduled(
             "Upgrade of node '{}' to version {} has been scheduled on {}"
             .format(self.nodeName, version, when))
         self._upgradeLog.appendScheduled(when, version, upgrade_id)
@@ -390,7 +390,7 @@ class Upgrader(HasActionQueue):
                         .format(self.nodeName, version, why))
             self._unscheduleUpgrade()
             self._upgradeLog.appendCancelled(when, version, upgrade_id)
-            self._notifier.sendMessageUponPoolUpgradeCancel(
+            self._notifier.send_pool_upgrade_cancel(
                 "Upgrade of node '{}' to version {} "
                 "has been cancelled due to {}"
                 .format(self.nodeName, version, why))
@@ -440,7 +440,7 @@ class Upgrader(HasActionQueue):
                 retryLimit -= 1
         if not retryLimit:
             logger.error("Failed to send update request!")
-            self._notifier.sendMessageUponNodeUpgradeFail(
+            self._notifier.send_node_self_upgrade_fail(
                 "Upgrade of node '{}' to version {} failed "
                 "because of problems in communication with "
                 "node control service"
@@ -476,7 +476,7 @@ class Upgrader(HasActionQueue):
 
         logger.error("Upgrade to version {} scheduled on {} "
                      "failed because timeout exceeded")
-        self._notifier.sendMessageUponNodeUpgradeFail(
+        self._notifier.send_node_self_upgrade_fail(
             "Upgrade of node '{}' to version {} failed "
             "because if exceeded timeout"
             .format(self.nodeName, version))
