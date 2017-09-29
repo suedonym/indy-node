@@ -2,8 +2,6 @@
 
 ## A Developer Guide from the Sovrin Foundation
 
-![image alt text](banner.png)
-
 * [Getting Started with Sovrin](#getting-started-with-sovrin)
   * [What Sovrin Is, and Why it Matters](#what-sovrin-is-and-why-it-matters)
   * [What We'll Cover](#what-well-cover)
